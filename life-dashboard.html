@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chaiti's Life Dashboard v2</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+
+        /* Navigation */
+        .nav {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            padding: 20px;
+            background: rgba(0,0,0,0.3);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .nav-btn {
+            padding: 10px 25px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: all 0.3s;
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+        }
+        .nav-btn.active {
+            background: linear-gradient(90deg, #feca57, #ff6b6b);
+            color: #1a1a2e;
+            font-weight: bold;
+        }
+
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+
+        /* Header */
+        .header { text-align: center; margin-bottom: 25px; }
+        .header h1 {
+            font-size: 2.2rem;
+            background: linear-gradient(90deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .greeting { color: #feca57; margin-top: 8px; font-size: 1.1rem; }
+
+        /* Countdowns Row */
+        .countdowns {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        @media (max-width: 800px) { .countdowns { grid-template-columns: repeat(2, 1fr); } }
+        .countdown-card {
+            background: rgba(255,255,255,0.08);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            border-left: 3px solid;
+        }
+        .countdown-card.marathon { border-color: #ff6b6b; }
+        .countdown-card.gallery { border-color: #48dbfb; }
+        .countdown-card.job { border-color: #feca57; }
+        .countdown-card.streak { border-color: #10b981; }
+        .countdown-number { font-size: 2.2rem; font-weight: bold; }
+        .countdown-label { font-size: 0.8rem; color: #888; margin-top: 3px; }
+
+        /* View Container */
+        .view { display: none; }
+        .view.active { display: block; }
+
+        /* ===== TODAY VIEW ===== */
+        .today-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 900px) { .today-grid { grid-template-columns: 1fr; } }
+
+        .card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 14px;
+            padding: 18px;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .card h2 {
+            font-size: 1.1rem;
+            margin-bottom: 12px;
+            color: #ddd;
+        }
+
+        /* Schedule Items */
+        .task-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.04);
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+        .task-item:hover { background: rgba(255,255,255,0.08); }
+        .task-item.completed { opacity: 0.4; }
+        .task-item.current { background: rgba(254,202,87,0.15); border-color: #feca57; }
+        .task-item.overdue { border-color: #ef4444; background: rgba(239,68,68,0.1); }
+        .task-item.rolled-over { border-color: #a855f7; }
+
+        .task-checkbox {
+            width: 22px; height: 22px;
+            border-radius: 6px;
+            border: 2px solid #444;
+            margin-right: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .task-item.completed .task-checkbox { background: #10b981; border-color: #10b981; }
+        .task-checkbox::after { content: '✓'; color: white; opacity: 0; font-size: 14px; }
+        .task-item.completed .task-checkbox::after { opacity: 1; }
+
+        .task-time { width: 70px; font-size: 0.8rem; color: #888; }
+        .task-content { flex: 1; }
+        .task-title { font-weight: 500; }
+        .task-duration { font-size: 0.75rem; color: #666; margin-top: 2px; }
+        .task-tag {
+            font-size: 0.7rem;
+            padding: 3px 8px;
+            border-radius: 12px;
+            margin-left: 8px;
+        }
+        .tag-gym { background: rgba(255,107,107,0.3); color: #ff6b6b; }
+        .tag-paint { background: rgba(72,219,251,0.3); color: #48dbfb; }
+        .tag-job { background: rgba(254,202,87,0.3); color: #feca57; }
+        .tag-app { background: rgba(16,185,129,0.3); color: #10b981; }
+        .tag-rolled { background: rgba(168,85,247,0.3); color: #a855f7; }
+
+        /* ===== WEEK VIEW ===== */
+        .week-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 10px;
+        }
+        @media (max-width: 900px) {
+            .week-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        .day-column {
+            background: rgba(255,255,255,0.03);
+            border-radius: 12px;
+            padding: 12px;
+            min-height: 400px;
+        }
+        .day-column.today { border: 1px solid #feca57; }
+        .day-header {
+            text-align: center;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 10px;
+        }
+        .day-name { font-weight: bold; font-size: 0.9rem; }
+        .day-date { font-size: 0.75rem; color: #888; }
+        .day-task {
+            padding: 8px;
+            margin-bottom: 6px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .day-task:hover { transform: scale(1.02); }
+        .day-task.completed { opacity: 0.4; text-decoration: line-through; }
+        .day-task.gym { background: rgba(255,107,107,0.2); border-left: 2px solid #ff6b6b; }
+        .day-task.paint { background: rgba(72,219,251,0.2); border-left: 2px solid #48dbfb; }
+        .day-task.job { background: rgba(254,202,87,0.2); border-left: 2px solid #feca57; }
+        .day-task.app { background: rgba(16,185,129,0.2); border-left: 2px solid #10b981; }
+        .day-task.rest { background: rgba(100,100,100,0.2); border-left: 2px solid #666; }
+
+        /* Weekly Stats */
+        .week-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .week-stat {
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+        }
+        .week-stat-value { font-size: 1.8rem; font-weight: bold; }
+        .week-stat-label { font-size: 0.75rem; color: #888; }
+        .week-stat-target { font-size: 0.7rem; color: #666; }
+
+        /* ===== GOALS VIEW ===== */
+        .goals-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+        @media (max-width: 800px) { .goals-grid { grid-template-columns: 1fr; } }
+
+        .goal-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 14px;
+            padding: 20px;
+        }
+        .goal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .goal-title { font-size: 1.1rem; font-weight: bold; }
+        .goal-deadline { font-size: 0.8rem; color: #888; }
+
+        .goal-progress {
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+        .goal-progress-fill {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.5s;
+        }
+        .goal-progress-fill.paint { background: linear-gradient(90deg, #48dbfb, #0abde3); }
+        .goal-progress-fill.marathon { background: linear-gradient(90deg, #ff6b6b, #ee5253); }
+        .goal-progress-fill.job { background: linear-gradient(90deg, #feca57, #ff9f43); }
+        .goal-progress-fill.app { background: linear-gradient(90deg, #10b981, #059669); }
+
+        .milestone-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            margin-bottom: 6px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.03);
+            cursor: pointer;
+        }
+        .milestone-item.completed { opacity: 0.5; }
+        .milestone-check {
+            width: 18px; height: 18px;
+            border-radius: 50%;
+            border: 2px solid #444;
+            margin-right: 10px;
+        }
+        .milestone-item.completed .milestone-check { background: #10b981; border-color: #10b981; }
+
+        /* Rollover Alert */
+        .rollover-alert {
+            background: linear-gradient(90deg, rgba(168,85,247,0.2), rgba(139,92,246,0.2));
+            border: 1px solid rgba(168,85,247,0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .rollover-alert.hidden { display: none; }
+        .rollover-icon { font-size: 1.5rem; }
+        .rollover-text { flex: 1; }
+        .rollover-action {
+            padding: 8px 16px;
+            background: #a855f7;
+            border: none;
+            border-radius: 20px;
+            color: white;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        /* Garmin Connect Card */
+        .garmin-card {
+            background: linear-gradient(135deg, rgba(0,172,193,0.2), rgba(0,150,136,0.2));
+            border: 1px solid rgba(0,172,193,0.3);
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        .garmin-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .garmin-status {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+        }
+        .garmin-status.connected { background: #10b981; }
+        .garmin-status.disconnected { background: #666; }
+        .garmin-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .garmin-stat { text-align: center; }
+        .garmin-stat-value { font-size: 1.3rem; font-weight: bold; color: #00bcd4; }
+        .garmin-stat-label { font-size: 0.7rem; color: #888; }
+
+        /* Agent Suggestions */
+        .agent-card {
+            background: linear-gradient(135deg, rgba(254,202,87,0.1), rgba(255,159,67,0.1));
+            border: 1px solid rgba(254,202,87,0.2);
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        .agent-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #feca57;
+        }
+        .suggestion-item {
+            padding: 10px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+        .suggestion-item strong { color: #feca57; }
+
+        /* Footer Actions */
+        .footer-actions {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(15,15,26,0.95);
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        .footer-btn {
+            padding: 10px 20px;
+            border-radius: 25px;
+            border: none;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s;
+        }
+        .footer-btn.primary {
+            background: linear-gradient(90deg, #feca57, #ff6b6b);
+            color: #1a1a2e;
+            font-weight: bold;
+        }
+        .footer-btn.secondary {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+        }
+
+        /* Add padding for fixed footer */
+        body { padding-bottom: 80px; }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="nav">
+        <button class="nav-btn active" onclick="showView('today')">📅 Today</button>
+        <button class="nav-btn" onclick="showView('week')">📊 Week</button>
+        <button class="nav-btn" onclick="showView('goals')">🎯 Goals</button>
+    </nav>
+
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>Life Dashboard</h1>
+            <div class="greeting" id="greeting"></div>
+        </div>
+
+        <!-- Countdowns -->
+        <div class="countdowns">
+            <div class="countdown-card marathon">
+                <div class="countdown-number" id="marathonDays">--</div>
+                <div class="countdown-label">Days to Marathon</div>
+            </div>
+            <div class="countdown-card gallery">
+                <div class="countdown-number" id="galleryDays">--</div>
+                <div class="countdown-label">Days to Gallery</div>
+            </div>
+            <div class="countdown-card job">
+                <div class="countdown-number">6</div>
+                <div class="countdown-label">Active Apps</div>
+            </div>
+            <div class="countdown-card streak">
+                <div class="countdown-number" id="streakDays">0</div>
+                <div class="countdown-label">Day Streak 🔥</div>
+            </div>
+        </div>
+
+        <!-- Rollover Alert -->
+        <div class="rollover-alert" id="rolloverAlert">
+            <span class="rollover-icon">⚡</span>
+            <div class="rollover-text">
+                <strong>Tasks rolled over from yesterday!</strong>
+                <div style="font-size: 0.85rem; color: #aaa;" id="rolloverDetails"></div>
+            </div>
+            <button class="rollover-action" onclick="acknowledgeRollover()">Got it</button>
+        </div>
+
+        <!-- ===== TODAY VIEW ===== -->
+        <div class="view active" id="todayView">
+            <div class="today-grid">
+                <!-- Today's Schedule -->
+                <div class="card">
+                    <h2>📋 Today's Tasks</h2>
+                    <div id="todayTasks"></div>
+                </div>
+
+                <!-- Right Column -->
+                <div>
+                    <!-- Agent Suggestions -->
+                    <div class="agent-card">
+                        <div class="agent-header">🤖 Life Commander Suggests</div>
+                        <div id="agentSuggestions"></div>
+                    </div>
+
+                    <!-- Garmin Connect -->
+                    <div class="garmin-card">
+                        <div class="garmin-header">
+                            <span>⌚ Garmin Connect</span>
+                            <span class="garmin-status disconnected" id="garminStatus">Not Connected</span>
+                        </div>
+                        <div style="font-size: 0.85rem; color: #aaa;">
+                            This week's training:
+                        </div>
+                        <div class="garmin-stats">
+                            <div class="garmin-stat">
+                                <div class="garmin-stat-value" id="weekMiles">0</div>
+                                <div class="garmin-stat-label">Miles</div>
+                            </div>
+                            <div class="garmin-stat">
+                                <div class="garmin-stat-value" id="weekRuns">0</div>
+                                <div class="garmin-stat-label">Runs</div>
+                            </div>
+                            <div class="garmin-stat">
+                                <div class="garmin-stat-value" id="weekTarget">15-18</div>
+                                <div class="garmin-stat-label">Target Miles</div>
+                            </div>
+                        </div>
+                        <div style="margin-top: 12px; font-size: 0.8rem;">
+                            <a href="#" onclick="showGarminHelp()" style="color: #00bcd4;">How to connect Garmin →</a>
+                        </div>
+                    </div>
+
+                    <!-- Quick Stats -->
+                    <div class="card" style="margin-top: 15px;">
+                        <h2>📊 Today's Progress</h2>
+                        <div style="margin-top: 10px;">
+                            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 5px;">
+                                <span>Tasks completed</span>
+                                <span id="todayProgress">0/0</span>
+                            </div>
+                            <div class="goal-progress">
+                                <div class="goal-progress-fill paint" id="todayProgressBar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== WEEK VIEW ===== -->
+        <div class="view" id="weekView">
+            <!-- Weekly Stats -->
+            <div class="week-stats">
+                <div class="week-stat">
+                    <div class="week-stat-value" style="color: #ff6b6b;" id="weekGymHours">0</div>
+                    <div class="week-stat-label">Training Hours</div>
+                    <div class="week-stat-target">Target: 10-12 hrs</div>
+                </div>
+                <div class="week-stat">
+                    <div class="week-stat-value" style="color: #48dbfb;" id="weekPaintHours">0</div>
+                    <div class="week-stat-label">Painting Hours</div>
+                    <div class="week-stat-target">Target: 8-10 hrs</div>
+                </div>
+                <div class="week-stat">
+                    <div class="week-stat-value" style="color: #feca57;" id="weekJobHours">0</div>
+                    <div class="week-stat-label">Job Hunt Hours</div>
+                    <div class="week-stat-target">Target: 7-10 hrs</div>
+                </div>
+                <div class="week-stat">
+                    <div class="week-stat-value" style="color: #10b981;" id="weekAppHours">0</div>
+                    <div class="week-stat-label">App Dev Hours</div>
+                    <div class="week-stat-target">Target: 6-8 hrs</div>
+                </div>
+            </div>
+
+            <!-- Week Grid -->
+            <div class="week-grid" id="weekGrid"></div>
+        </div>
+
+        <!-- ===== GOALS VIEW ===== -->
+        <div class="view" id="goalsView">
+            <div class="goals-grid">
+                <!-- Painting Goal -->
+                <div class="goal-card">
+                    <div class="goal-header">
+                        <span class="goal-title">🎨 Gallery Exhibit</span>
+                        <span class="goal-deadline">April 24, 2026</span>
+                    </div>
+                    <div class="goal-progress">
+                        <div class="goal-progress-fill paint" id="paintGoalProgress" style="width: 0%"></div>
+                    </div>
+                    <div style="font-size: 0.85rem; color: #888; margin-bottom: 15px;">
+                        <span id="paintingsComplete">0</span>/5 paintings complete
+                    </div>
+                    <div id="paintingMilestones"></div>
+                </div>
+
+                <!-- Marathon Goal -->
+                <div class="goal-card">
+                    <div class="goal-header">
+                        <span class="goal-title">🏃 Half Marathon</span>
+                        <span class="goal-deadline">April 23, 2026</span>
+                    </div>
+                    <div class="goal-progress">
+                        <div class="goal-progress-fill marathon" id="marathonGoalProgress" style="width: 0%"></div>
+                    </div>
+                    <div style="font-size: 0.85rem; color: #888; margin-bottom: 15px;">
+                        Week <span id="trainingWeek">1</span> of 12
+                    </div>
+                    <div id="trainingMilestones"></div>
+                </div>
+
+                <!-- Job Hunt Goal -->
+                <div class="goal-card">
+                    <div class="goal-header">
+                        <span class="goal-title">💼 Land Dream Job</span>
+                        <span class="goal-deadline">Priority #1</span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 15px 0;">
+                        <div style="text-align: center;">
+                            <div style="font-size: 1.5rem; font-weight: bold; color: #10b981;">6</div>
+                            <div style="font-size: 0.75rem; color: #888;">Active</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 1.5rem; font-weight: bold; color: #feca57;">3</div>
+                            <div style="font-size: 0.75rem; color: #888;">Need Follow-up</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 1.5rem; font-weight: bold; color: #ef4444;">2</div>
+                            <div style="font-size: 0.75rem; color: #888;">Rejected</div>
+                        </div>
+                    </div>
+                    <div style="font-size: 0.85rem; padding: 10px; background: rgba(254,202,87,0.1); border-radius: 8px;">
+                        <strong style="color: #feca57;">Today:</strong> Follow up with Anthropic & OpenAI recruiters
+                    </div>
+                </div>
+
+                <!-- App Goal -->
+                <div class="goal-card">
+                    <div class="goal-header">
+                        <span class="goal-title">📱 AI Fashion App</span>
+                        <span class="goal-deadline">Beta Launch</span>
+                    </div>
+                    <div class="goal-progress">
+                        <div class="goal-progress-fill app" style="width: 70%"></div>
+                    </div>
+                    <div style="font-size: 0.85rem; color: #888; margin-bottom: 15px;">
+                        ~70% to beta ready
+                    </div>
+                    <div id="appMilestones"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer Actions -->
+    <div class="footer-actions">
+        <button class="footer-btn secondary" onclick="resetDay()">🔄 Reset Today</button>
+        <button class="footer-btn secondary" onclick="showGarminHelp()">⌚ Connect Garmin</button>
+        <button class="footer-btn primary" onclick="endDay()">✅ End Day & Review</button>
+    </div>
+
+    <!-- Garmin Help Modal -->
+    <div id="garminModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 1000; padding: 20px; overflow-y: auto;">
+        <div style="max-width: 600px; margin: 50px auto; background: #1a1a2e; border-radius: 16px; padding: 25px;">
+            <h2 style="margin-bottom: 15px;">⌚ Connect Garmin to Your Dashboard</h2>
+            <p style="color: #aaa; margin-bottom: 20px;">
+                To sync your running data automatically, you'll need to set up the Garmin Connect API. Here's how:
+            </p>
+            <div style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 15px; margin-bottom: 15px;">
+                <h3 style="color: #00bcd4; margin-bottom: 10px;">Option 1: Manual Entry (Easy)</h3>
+                <p style="font-size: 0.9rem; color: #aaa;">
+                    After each run, click "Log Run" below to manually enter your distance and time.
+                </p>
+            </div>
+            <div style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 15px; margin-bottom: 15px;">
+                <h3 style="color: #00bcd4; margin-bottom: 10px;">Option 2: Garmin API (Advanced)</h3>
+                <ol style="font-size: 0.9rem; color: #aaa; padding-left: 20px;">
+                    <li style="margin-bottom: 8px;">Go to <a href="https://developer.garmin.com" style="color: #48dbfb;">developer.garmin.com</a></li>
+                    <li style="margin-bottom: 8px;">Create a developer account and register an app</li>
+                    <li style="margin-bottom: 8px;">Get your API credentials (Consumer Key & Secret)</li>
+                    <li style="margin-bottom: 8px;">Add them to your Life Commander config</li>
+                </ol>
+                <p style="font-size: 0.8rem; color: #666; margin-top: 10px;">
+                    Note: Garmin's API requires OAuth and a server. For personal use, manual entry or using Strava's easier API is recommended.
+                </p>
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button onclick="logRun()" style="flex: 1; padding: 12px; background: #00bcd4; border: none; border-radius: 8px; color: white; cursor: pointer; font-weight: bold;">
+                    📝 Log Run Manually
+                </button>
+                <button onclick="closeGarminModal()" style="flex: 1; padding: 12px; background: rgba(255,255,255,0.1); border: none; border-radius: 8px; color: white; cursor: pointer;">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== DATA =====
+        const weeklySchedule = {
+            Mon: [
+                { time: '8:00', title: 'Gym / Run', duration: '2 hrs', category: 'gym' },
+                { time: '10:30', title: 'Job Hunting', duration: '1.5 hrs', category: 'job' },
+                { time: '2:00', title: 'App Development', duration: '3 hrs', category: 'app' },
+            ],
+            Tue: [
+                { time: '8:00', title: 'Gym / Cross-train', duration: '1.5 hrs', category: 'gym' },
+                { time: '10:30', title: 'PAINTING', duration: '3 hrs', category: 'paint' },
+                { time: '2:30', title: 'Job Hunting', duration: '1.5 hrs', category: 'job' },
+            ],
+            Wed: [
+                { time: '8:00', title: 'Gym / Run', duration: '2 hrs', category: 'gym' },
+                { time: '10:30', title: 'Job Hunting', duration: '1.5 hrs', category: 'job' },
+                { time: '2:00', title: 'App Development', duration: '3 hrs', category: 'app' },
+            ],
+            Thu: [
+                { time: '8:00', title: 'Gym / Cross-train', duration: '1.5 hrs', category: 'gym' },
+                { time: '10:30', title: 'PAINTING', duration: '3 hrs', category: 'paint' },
+                { time: '2:30', title: 'Job Hunting', duration: '1.5 hrs', category: 'job' },
+            ],
+            Fri: [
+                { time: '8:00', title: 'Gym / Run', duration: '2 hrs', category: 'gym' },
+                { time: '10:30', title: 'Job Hunting', duration: '1.5 hrs', category: 'job' },
+                { time: '2:00', title: 'App Development', duration: '2 hrs', category: 'app' },
+            ],
+            Sat: [
+                { time: '8:00', title: 'Long Run', duration: '2.5 hrs', category: 'gym' },
+                { time: '11:00', title: 'PAINTING (Big Session)', duration: '4 hrs', category: 'paint' },
+                { time: '4:00', title: 'Rest / Free time', duration: '-', category: 'rest' },
+            ],
+            Sun: [
+                { time: '9:00', title: 'Easy Run / Rest', duration: '1 hr', category: 'gym' },
+                { time: '11:00', title: 'PAINTING', duration: '3 hrs', category: 'paint' },
+                { time: '3:00', title: 'Week Review & Planning', duration: '1 hr', category: 'job' },
+            ]
+        };
+
+        const paintings = [
+            { name: 'Painting 1', deadline: 'Feb 14', status: 'in-progress' },
+            { name: 'Painting 2', deadline: 'Mar 1', status: 'not-started' },
+            { name: 'Painting 3', deadline: 'Mar 17', status: 'not-started' },
+            { name: 'Painting 4', deadline: 'Apr 2', status: 'not-started' },
+            { name: 'Painting 5', deadline: 'Apr 17', status: 'not-started' }
+        ];
+
+        const trainingWeeks = [
+            { week: 1, name: 'Base Building', miles: '15-18' },
+            { week: 2, name: 'Base Building', miles: '15-18' },
+            { week: 3, name: 'Build Phase', miles: '18-22' },
+            { week: 4, name: 'Build Phase', miles: '20-24' },
+            { week: 5, name: 'Build Phase', miles: '22-25' },
+            { week: 6, name: 'Build Phase', miles: '24-27' },
+            { week: 7, name: 'Peak Training', miles: '25-28' },
+            { week: 8, name: 'Peak Training', miles: '25-28' },
+            { week: 9, name: 'Taper', miles: '22-25' },
+            { week: 10, name: 'Taper', miles: '18-22' },
+            { week: 11, name: 'Taper', miles: '15-18' },
+            { week: 12, name: 'Race Week!', miles: '8-10' }
+        ];
+
+        // ===== INITIALIZE =====
+        function init() {
+            updateGreeting();
+            calculateCountdowns();
+            loadData();
+            renderTodayTasks();
+            renderWeekGrid();
+            renderGoals();
+            generateSuggestions();
+            checkRollovers();
+            updateStreak();
+            setInterval(updateGreeting, 60000);
+        }
+
+        function loadData() {
+            // Load persisted data
+            window.completedTasks = JSON.parse(localStorage.getItem('completedTasks') || '{}');
+            window.paintingStatus = JSON.parse(localStorage.getItem('paintingStatus')) || paintings;
+            window.runLog = JSON.parse(localStorage.getItem('runLog') || '[]');
+            window.rolledOverTasks = JSON.parse(localStorage.getItem('rolledOverTasks') || '[]');
+        }
+
+        function saveData() {
+            localStorage.setItem('completedTasks', JSON.stringify(window.completedTasks));
+            localStorage.setItem('paintingStatus', JSON.stringify(window.paintingStatus));
+            localStorage.setItem('runLog', JSON.stringify(window.runLog));
+            localStorage.setItem('rolledOverTasks', JSON.stringify(window.rolledOverTasks));
+        }
+
+        // ===== NAVIGATION =====
+        function showView(view) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(view + 'View').classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // ===== TODAY VIEW =====
+        function getTodayKey() {
+            return new Date().toISOString().split('T')[0];
+        }
+
+        function getDayName() {
+            return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][new Date().getDay()];
+        }
+
+        function renderTodayTasks() {
+            const container = document.getElementById('todayTasks');
+            const dayName = getDayName();
+            const todayKey = getTodayKey();
+            const tasks = weeklySchedule[dayName] || [];
+            const completed = window.completedTasks[todayKey] || [];
+
+            // Add rolled over tasks
+            let allTasks = [...window.rolledOverTasks.map(t => ({...t, rolledOver: true})), ...tasks];
+
+            container.innerHTML = allTasks.map((task, index) => {
+                const isCompleted = completed.includes(index);
+                const tagClass = `tag-${task.category}`;
+                const rolledClass = task.rolledOver ? 'rolled-over' : '';
+
+                return `
+                    <div class="task-item ${isCompleted ? 'completed' : ''} ${rolledClass}" onclick="toggleTodayTask(${index})">
+                        <div class="task-checkbox"></div>
+                        <div class="task-time">${task.time}</div>
+                        <div class="task-content">
+                            <div class="task-title">${task.title}</div>
+                            <div class="task-duration">${task.duration}</div>
+                        </div>
+                        <span class="task-tag ${tagClass}">${task.category}</span>
+                        ${task.rolledOver ? '<span class="task-tag tag-rolled">rolled</span>' : ''}
+                    </div>
+                `;
+            }).join('');
+
+            // Update progress
+            const total = allTasks.length;
+            const done = completed.length;
+            document.getElementById('todayProgress').textContent = `${done}/${total}`;
+            document.getElementById('todayProgressBar').style.width = `${(done/total)*100}%`;
+        }
+
+        function toggleTodayTask(index) {
+            const todayKey = getTodayKey();
+            if (!window.completedTasks[todayKey]) window.completedTasks[todayKey] = [];
+
+            const arr = window.completedTasks[todayKey];
+            if (arr.includes(index)) {
+                window.completedTasks[todayKey] = arr.filter(i => i !== index);
+            } else {
+                arr.push(index);
+            }
+            saveData();
+            renderTodayTasks();
+        }
+
+        // ===== WEEK VIEW =====
+        function renderWeekGrid() {
+            const container = document.getElementById('weekGrid');
+            const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            const today = getDayName();
+
+            // Calculate week dates
+            const now = new Date();
+            const monday = new Date(now);
+            monday.setDate(now.getDate() - now.getDay() + 1);
+
+            container.innerHTML = days.map((day, i) => {
+                const date = new Date(monday);
+                date.setDate(monday.getDate() + i);
+                const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                const isToday = day === today;
+                const tasks = weeklySchedule[day] || [];
+
+                return `
+                    <div class="day-column ${isToday ? 'today' : ''}">
+                        <div class="day-header">
+                            <div class="day-name">${day}</div>
+                            <div class="day-date">${dateStr}</div>
+                        </div>
+                        ${tasks.map(t => `
+                            <div class="day-task ${t.category}">
+                                <div style="font-weight: 500;">${t.title}</div>
+                                <div style="font-size: 0.7rem; color: #888;">${t.time} • ${t.duration}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }).join('');
+
+            // Update weekly stats
+            let gymHrs = 0, paintHrs = 0, jobHrs = 0, appHrs = 0;
+            Object.values(weeklySchedule).forEach(day => {
+                day.forEach(task => {
+                    const hrs = parseFloat(task.duration) || 0;
+                    if (task.category === 'gym') gymHrs += hrs;
+                    if (task.category === 'paint') paintHrs += hrs;
+                    if (task.category === 'job') jobHrs += hrs;
+                    if (task.category === 'app') appHrs += hrs;
+                });
+            });
+            document.getElementById('weekGymHours').textContent = gymHrs.toFixed(1);
+            document.getElementById('weekPaintHours').textContent = paintHrs.toFixed(1);
+            document.getElementById('weekJobHours').textContent = jobHrs.toFixed(1);
+            document.getElementById('weekAppHours').textContent = appHrs.toFixed(1);
+        }
+
+        // ===== GOALS VIEW =====
+        function renderGoals() {
+            // Paintings
+            const paintContainer = document.getElementById('paintingMilestones');
+            paintContainer.innerHTML = window.paintingStatus.map((p, i) => {
+                const completed = p.status === 'completed';
+                return `
+                    <div class="milestone-item ${completed ? 'completed' : ''}" onclick="cyclePainting(${i})">
+                        <div class="milestone-check"></div>
+                        <div style="flex: 1;">${p.name}</div>
+                        <div style="font-size: 0.8rem; color: #888;">Due: ${p.deadline}</div>
+                    </div>
+                `;
+            }).join('');
+
+            const completedPaintings = window.paintingStatus.filter(p => p.status === 'completed').length;
+            document.getElementById('paintingsComplete').textContent = completedPaintings;
+            document.getElementById('paintGoalProgress').style.width = `${(completedPaintings/5)*100}%`;
+
+            // Training
+            const trainContainer = document.getElementById('trainingMilestones');
+            const currentWeek = Math.ceil((new Date('2026-04-23') - new Date()) / (1000*60*60*24*7));
+            const weekNum = Math.max(1, 12 - currentWeek + 1);
+            document.getElementById('trainingWeek').textContent = weekNum;
+            document.getElementById('marathonGoalProgress').style.width = `${(weekNum/12)*100}%`;
+            document.getElementById('weekTarget').textContent = trainingWeeks[weekNum-1]?.miles || '15-18';
+
+            trainContainer.innerHTML = trainingWeeks.slice(0, 6).map((w, i) => {
+                const completed = i < weekNum - 1;
+                const current = i === weekNum - 1;
+                return `
+                    <div class="milestone-item ${completed ? 'completed' : ''}" style="${current ? 'border: 1px solid #ff6b6b;' : ''}">
+                        <div class="milestone-check"></div>
+                        <div style="flex: 1;">Week ${w.week}: ${w.name}</div>
+                        <div style="font-size: 0.8rem; color: #888;">${w.miles} mi</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function cyclePainting(index) {
+            const statuses = ['not-started', 'in-progress', 'completed'];
+            const current = statuses.indexOf(window.paintingStatus[index].status);
+            window.paintingStatus[index].status = statuses[(current + 1) % 3];
+            saveData();
+            renderGoals();
+        }
+
+        // ===== AGENT SUGGESTIONS =====
+        function generateSuggestions() {
+            const container = document.getElementById('agentSuggestions');
+            const dayName = getDayName();
+            const suggestions = [];
+
+            // Check what's on today's schedule
+            const todayTasks = weeklySchedule[dayName] || [];
+            const hasPainting = todayTasks.some(t => t.category === 'paint');
+            const hasJob = todayTasks.some(t => t.category === 'job');
+
+            if (hasJob) {
+                suggestions.push(`<strong>Job Hunt Focus:</strong> Follow up with Anthropic & OpenAI recruiters on LinkedIn today.`);
+            }
+            if (hasPainting) {
+                const inProgress = window.paintingStatus.find(p => p.status === 'in-progress');
+                if (inProgress) {
+                    suggestions.push(`<strong>Painting:</strong> Continue working on ${inProgress.name} (due ${inProgress.deadline}).`);
+                }
+            }
+            if (dayName === 'Sun') {
+                suggestions.push(`<strong>Weekly Review:</strong> Plan next week's priorities and update your job tracker.`);
+            }
+            if (window.rolledOverTasks.length > 0) {
+                suggestions.push(`<strong>Catch up:</strong> You have ${window.rolledOverTasks.length} task(s) rolled over from previous days.`);
+            }
+
+            // Default suggestion
+            if (suggestions.length === 0) {
+                suggestions.push(`<strong>Stay focused:</strong> You're on track! Complete today's tasks and you're golden.`);
+            }
+
+            container.innerHTML = suggestions.map(s => `<div class="suggestion-item">${s}</div>`).join('');
+        }
+
+        // ===== ROLLOVER LOGIC =====
+        function checkRollovers() {
+            const lastVisit = localStorage.getItem('lastVisitDate');
+            const today = getTodayKey();
+
+            if (lastVisit && lastVisit !== today) {
+                // Check yesterday's incomplete tasks
+                const yesterday = new Date();
+                yesterday.setDate(yesterday.getDate() - 1);
+                const yesterdayKey = yesterday.toISOString().split('T')[0];
+                const yesterdayDay = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][yesterday.getDay()];
+                const yesterdayTasks = weeklySchedule[yesterdayDay] || [];
+                const completed = window.completedTasks[yesterdayKey] || [];
+
+                const incomplete = yesterdayTasks.filter((t, i) => !completed.includes(i) && t.category !== 'rest');
+                if (incomplete.length > 0) {
+                    window.rolledOverTasks = incomplete;
+                    saveData();
+                    document.getElementById('rolloverAlert').classList.remove('hidden');
+                    document.getElementById('rolloverDetails').textContent =
+                        `${incomplete.length} task(s): ${incomplete.map(t => t.title).join(', ')}`;
+                }
+            }
+
+            localStorage.setItem('lastVisitDate', today);
+        }
+
+        function acknowledgeRollover() {
+            document.getElementById('rolloverAlert').classList.add('hidden');
+        }
+
+        // ===== UTILITIES =====
+        function updateGreeting() {
+            const hour = new Date().getHours();
+            let greeting = 'Good morning';
+            if (hour >= 12 && hour < 17) greeting = 'Good afternoon';
+            else if (hour >= 17) greeting = 'Good evening';
+            document.getElementById('greeting').textContent = `${greeting}, Chaiti! Let's make today count 💪`;
+        }
+
+        function calculateCountdowns() {
+            const today = new Date();
+            const marathon = new Date('2026-04-23');
+            const gallery = new Date('2026-04-24');
+            document.getElementById('marathonDays').textContent = Math.ceil((marathon - today) / (1000*60*60*24));
+            document.getElementById('galleryDays').textContent = Math.ceil((gallery - today) / (1000*60*60*24));
+        }
+
+        function updateStreak() {
+            // Simple streak counter
+            let streak = parseInt(localStorage.getItem('streak') || '0');
+            const lastComplete = localStorage.getItem('lastCompleteDate');
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            const yesterdayKey = yesterday.toISOString().split('T')[0];
+
+            if (lastComplete === yesterdayKey) {
+                // Streak continues
+            } else if (lastComplete !== getTodayKey()) {
+                streak = 0; // Streak broken
+            }
+            document.getElementById('streakDays').textContent = streak;
+        }
+
+        function resetDay() {
+            if (confirm('Reset all tasks for today?')) {
+                const todayKey = getTodayKey();
+                window.completedTasks[todayKey] = [];
+                saveData();
+                renderTodayTasks();
+            }
+        }
+
+        function endDay() {
+            const todayKey = getTodayKey();
+            const dayName = getDayName();
+            const tasks = weeklySchedule[dayName] || [];
+            const completed = window.completedTasks[todayKey] || [];
+
+            if (completed.length === tasks.length + window.rolledOverTasks.length) {
+                let streak = parseInt(localStorage.getItem('streak') || '0') + 1;
+                localStorage.setItem('streak', streak);
+                localStorage.setItem('lastCompleteDate', todayKey);
+                alert(`🎉 Amazing! You completed all tasks!\n\nStreak: ${streak} days 🔥`);
+                window.rolledOverTasks = [];
+                saveData();
+            } else {
+                const incomplete = tasks.length + window.rolledOverTasks.length - completed.length;
+                if (confirm(`You have ${incomplete} incomplete task(s).\n\nRoll them over to tomorrow?`)) {
+                    const allTasks = [...window.rolledOverTasks, ...tasks];
+                    window.rolledOverTasks = allTasks.filter((t, i) => !completed.includes(i) && t.category !== 'rest');
+                    saveData();
+                    alert('Tasks rolled over. Get them tomorrow! 💪');
+                }
+            }
+            updateStreak();
+        }
+
+        // ===== GARMIN =====
+        function showGarminHelp() {
+            document.getElementById('garminModal').style.display = 'block';
+        }
+
+        function closeGarminModal() {
+            document.getElementById('garminModal').style.display = 'none';
+        }
+
+        function logRun() {
+            const miles = prompt('Enter miles run:');
+            if (miles) {
+                const time = prompt('Enter time (e.g., 28:30):');
+                window.runLog.push({ date: getTodayKey(), miles: parseFloat(miles), time });
+                saveData();
+
+                // Update display
+                const weekMiles = window.runLog
+                    .filter(r => new Date(r.date) > new Date(Date.now() - 7*24*60*60*1000))
+                    .reduce((sum, r) => sum + r.miles, 0);
+                document.getElementById('weekMiles').textContent = weekMiles.toFixed(1);
+                document.getElementById('weekRuns').textContent = window.runLog.filter(r =>
+                    new Date(r.date) > new Date(Date.now() - 7*24*60*60*1000)
+                ).length;
+
+                alert(`Logged: ${miles} miles in ${time}! 🏃`);
+                closeGarminModal();
+            }
+        }
+
+        // Initialize
+        init();
+    </script>
+</body>
+</html>
